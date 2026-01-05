@@ -9,6 +9,22 @@
 
 ## Required Environment Variables
 
+### 0. Critical: Disable Problematic Features
+
+```bash
+# Disable community packages (fixes module loading errors)
+N8N_COMMUNITY_PACKAGES_ENABLED=false
+
+# Disable diagnostics (optional, reduces overhead)
+N8N_DIAGNOSTICS_ENABLED=false
+
+# Production settings
+NODE_ENV=production
+N8N_LOG_LEVEL=info
+```
+
+**⚠️ IMPORTANT**: Add these FIRST before other variables to prevent module loading errors.
+
 ### 1. Basic n8n Configuration
 
 ```bash

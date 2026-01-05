@@ -1,8 +1,16 @@
+[phases.setup]
+nixPkgs = ["nodejs_22"]
+
 [phases.install]
-cmds = ["npm install"]
+# Use npm install instead of npm ci to avoid lock file issues
+cmds = ["npm install --production=false"]
 
 [phases.build]
-cmds = ["echo 'No build needed for n8n'"]
+cmds = []
 
 [start]
 cmd = "npx n8n start"
+
+[variables]
+# Disable community packages if causing issues
+N8N_COMMUNITY_PACKAGES_ENABLED = "false"
