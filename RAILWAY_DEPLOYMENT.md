@@ -79,11 +79,13 @@ N8N_OPENAI_API_KEY=sk-proj-your-openai-api-key
 ```bash
 N8N_SMTP_HOST=smtp.gmail.com
 N8N_SMTP_PORT=587
-N8N_SMTP_USER=your-email@gmail.com
+N8N_SMTP_USER=toheedhamid9@gmail.com
 N8N_SMTP_PASS=your-app-specific-password
-N8N_SMTP_SENDER=your-email@gmail.com
+N8N_SMTP_SENDER=toheedhamid9@gmail.com
 N8N_SMTP_SSL=false
 ```
+
+**Note**: You need to generate a Gmail App Password (not your regular password). See `GMAIL_APP_PASSWORD_SETUP.md` for instructions.
 
 ### Optional n8n Variables:
 ```bash
