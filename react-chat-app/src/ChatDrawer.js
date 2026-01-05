@@ -43,7 +43,7 @@ function ChatDrawer({ isOpen, onClose, messages, onSendMessage, onFeedback, onCl
     };
 
     fetchKBStatus();
-  }, [isOpen]);
+  }, [isOpen, API_ENDPOINTS.status]);
 
   // Format timestamp for display
   const formatTimestamp = (timestamp) => {
