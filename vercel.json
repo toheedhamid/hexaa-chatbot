@@ -1,16 +1,22 @@
 {
   "version": 2,
-  "builds": [
+  "buildCommand": "cd react-chat-app && npm install && npm run build",
+  "outputDirectory": "react-chat-app/build",
+  "installCommand": "npm install --prefix react-chat-app && npm install --prefix api",
+  "framework": null,
+  "functions": {
+    "api/**/*.js": {
+      "runtime": "nodejs18.x"
+    }
+  },
+  "rewrites": [
     {
-      "src": "react-chat-app/package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "build"
-      }
+      "source": "/api/:path*",
+      "destination": "/api/:path*"
     },
     {
-      "src": "api/**/*.js",
-      "use": "@vercel/node"
+      "source": "/(.*)",
+      "destination": "/react-chat-app/build/$1"
     }
   ],
   "routes": [
@@ -19,8 +25,16 @@
       "dest": "/api/$1"
     },
     {
+      "src": "/static/(.*)",
+      "dest": "/react-chat-app/build/static/$1"
+    },
+    {
+      "src": "/(.*\\.(js|css|ico|png|jpg|jpeg|svg|json|woff|woff2|ttf|eot))",
+      "dest": "/react-chat-app/build/$1"
+    },
+    {
       "src": "/(.*)",
-      "dest": "/react-chat-app/$1"
+      "dest": "/react-chat-app/build/index.html"
     }
   ]
 }
