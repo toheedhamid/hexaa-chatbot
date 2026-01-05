@@ -1,0 +1,78 @@
+{
+  "name": "KB Status",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "status",
+        "httpMethod": "GET",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        1168,
+        16
+      ],
+      "id": "bbc10ce9-06e0-42f3-9ec1-4824a9e4d3f9",
+      "name": "Webhook",
+      "webhookId": "58df9ebd-59ea-4700-9fac-e5ca559bff62"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Read from global object\nif (!global.kbStatus) {\n  global.kbStatus = {\n    lastUpdate: \"2024-01-01T00:00:00.000Z\",\n    vectorCount: 0\n  };\n}\n\nreturn [{\n  json: {\n    lastUpdate: global.kbStatus.lastUpdate,\n    vectorCount: global.kbStatus.vectorCount,\n    status: 'success'\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1392,
+        16
+      ],
+      "id": "2e19db25-9e44-41b6-879f-b80349a59dca",
+      "name": "Code in JavaScript2"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}"
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1616,
+        16
+      ],
+      "id": "3e29eb35-9f55-42c7-98af-c9145ba60deb",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript2": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "instanceId": "8168d89a8ce98e7cbc6e660103a8a39adecf0664c1a6488687ea9c9107d1873b"
+  },
+  "active": true
+}
+
