@@ -66,33 +66,11 @@ function ChatDrawer({ isOpen, onClose, messages, onSendMessage, onFeedback, onCl
   const handleSummarize = async () => {
     setLoading(true);
     try {
-      const response = await fetch(WEBHOOK_ENDPOINTS.summarize, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ conversationId: conversationId || 'test' })
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      
-      const data = await response.json();
-      
-      // Handle different response types from n8n
-      if (data.type === 'error') {
-        onSendMessage(data.message, 'bot', { type: 'error' });
-      } else if (data.type === 'summary') {
-        onSendMessage(data.message, 'bot', { 
-          type: 'summary',
-          summary: data.summary,
-          messageCount: data.messageCount 
-        });
-      } else {
-        onSendMessage(data.message || 'Summary generated', 'bot', { type: 'summary' });
-      }
+      // For now, show a placeholder message
+      onSendMessage('Summarization feature is not yet available in this version.', 'bot', { type: 'info' });
     } catch (error) {
       console.error('Failed to summarize:', error);
-      onSendMessage(`Sorry, I couldn't generate a summary. Error: ${error.message}`, 'bot', { type: 'error' });
+      onSendMessage('Sorry, I couldn\'t generate a summary.', 'bot', { type: 'error' });
     } finally {
       setLoading(false);
     }
@@ -101,36 +79,11 @@ function ChatDrawer({ isOpen, onClose, messages, onSendMessage, onFeedback, onCl
   const handleCaseStudies = async () => {
     setLoading(true);
     try {
-      const response = await fetch(WEBHOOK_ENDPOINTS.caseStudies, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          query: 'show me relevant case studies',
-          filter: {}
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      
-      const data = await response.json();
-      
-      // Handle different response types
-      if (data.type === 'error') {
-        onSendMessage(data.message, 'bot', { type: 'error' });
-      } else if (data.type === 'case_studies') {
-        onSendMessage(data.message, 'bot', { 
-          type: 'case_studies', 
-          count: data.count,
-          caseStudies: data.caseStudies || []
-        });
-      } else {
-        onSendMessage(data.message || 'Here are the case studies', 'bot', { type: 'case_studies' });
-      }
+      // For now, show a placeholder message
+      onSendMessage('Case studies feature is not yet available in this version.', 'bot', { type: 'info' });
     } catch (error) {
       console.error('Failed to get case studies:', error);
-      onSendMessage(`Sorry, I couldn't retrieve case studies. Error: ${error.message}`, 'bot', { type: 'error' });
+      onSendMessage('Sorry, I couldn\'t retrieve case studies.', 'bot', { type: 'error' });
     } finally {
       setLoading(false);
     }
@@ -144,32 +97,41 @@ function ChatDrawer({ isOpen, onClose, messages, onSendMessage, onFeedback, onCl
         window.open(CALENDLY_LINK, '_blank');
         onSendMessage('Opening booking calendar...', 'bot');
       } else {
-        // Handle other navigation
-        try {
-          const response = await fetch(WEBHOOK_ENDPOINTS.navigate, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              destination: option.destination,
-              conversationId: conversationId || 'test'
-            })
-          });
-
-          const data = await response.json();
-          if (data.type === 'navigate') {
-            window.location.href = data.url;
-          } else {
-            onSendMessage(data.message || 'Navigation complete', 'bot');
-          }
-        } catch (error) {
-          console.error('Navigation failed:', error);
-          onSendMessage('Sorry, navigation failed.', 'bot', { type: 'error' });
-        }
+        // For now, show a placeholder message for other navigation
+        onSendMessage(`Navigation to ${option.destination} is not yet available in this version.`, 'bot', { type: 'info' });
       }
     } else if (option.action === 'mailto') {
       window.location.href = `mailto:${option.destination}`;
     } else if (option.action === 'dismiss') {
       onSendMessage('Thanks! I\'m here if you need anything else.', 'bot');
+    }
+  };
+
+  const handleClearChat = async () => {
+    if (window.confirm('Clear all chat history?')) {
+      setLoading(true);
+      try {
+        const response = await fetch(API_ENDPOINTS.chat, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            conversationId: conversationId || 'default',
+            action: 'clear'
+          })
+        });
+
+        if (response.ok) {
+          onClearChat();
+        } else {
+          throw new Error('Failed to clear chat on server');
+        }
+      } catch (error) {
+        console.error('Failed to clear chat:', error);
+        // Still clear local chat even if server call fails
+        onClearChat();
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
