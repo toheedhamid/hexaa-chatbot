@@ -7,15 +7,10 @@ WORKDIR /data
 # Copy workflow files
 COPY n8n_workflows/ /data/n8n_workflows/
 
-# Copy scripts to temporary location first
-COPY scripts/import-workflows.js /tmp/import-workflows.js
-COPY scripts/docker-entrypoint.sh /tmp/docker-entrypoint.sh
-
-# Make entrypoint script executable and move to final location
-RUN chmod +x /tmp/docker-entrypoint.sh && \
-    mv /tmp/docker-entrypoint.sh /data/docker-entrypoint.sh && \
-    mkdir -p /data/scripts && \
-    mv /tmp/import-workflows.js /data/scripts/import-workflows.js
+# Copy scripts directly to final location
+# Use --chmod to set permissions during copy (BuildKit feature)
+COPY --chmod=755 scripts/docker-entrypoint.sh /data/docker-entrypoint.sh
+COPY --chmod=644 scripts/import-workflows.js /data/scripts/import-workflows.js
 
 # Expose the default n8n port
 EXPOSE 5678
