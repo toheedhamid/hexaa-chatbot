@@ -1,0 +1,84 @@
+{
+  "name": "RunK6LoadTest",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "run-load-test",
+        "responseMode": "onReceived",
+        "options": {
+          "responseData": {
+            "responseDataType": "noData"
+          }
+        }
+      },
+      "id": "1",
+      "name": "Load Test Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [200, 300],
+      "webhookId": "run-load-test"
+    },
+    {
+      "parameters": {
+        "command": "BASE_URL=http://n8n:5678 k6 run --vus 20 --duration 5m /home/node/.n8n/scripts/test.js",
+        "options": {
+          "output": "lastNode"
+        }
+      },
+      "id": "2",
+      "name": "Execute k6",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "responseCode": 200,
+        "responseBody": "k6 load test started with VUs=20 duration=5m"
+      },
+      "id": "3",
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [800, 300]
+    }
+  ],
+  "connections": {
+    "Load Test Webhook": {
+      "main": [
+        [
+          {
+            "node": "Execute k6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute k6": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "timezone": "America/New_York"
+  },
+  "staticData": null,
+  "pinData": {},
+  "active": false,
+  "versionId": "load-test-webhook-v1"
+}
+
+
+
+
+
+

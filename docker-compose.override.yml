@@ -1,0 +1,32 @@
+# Development override file
+# This file automatically overrides docker-compose.yml for development
+# Use: docker-compose up (will automatically use this file)
+
+version: '3.8'
+
+services:
+  n8n:
+    environment:
+      - NODE_ENV=development
+      - N8N_LOG_LEVEL=debug
+    volumes:
+      - ./n8n_data:/home/node/.n8n
+      - ./n8n_workflows:/home/node/.n8n/workflows
+
+  react-app:
+    build:
+      context: ./react-chat-app
+      dockerfile: Dockerfile
+    volumes:
+      - ./react-chat-app:/app
+      - /app/node_modules
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+      - FAST_REFRESH=true
+    stdin_open: true
+    tty: true
+
+  redis:
+    volumes:
+      - ./redis_data:/data
+      - ./redis.conf:/usr/local/etc/redis/redis.conf:ro

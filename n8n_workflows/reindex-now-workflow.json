@@ -1,0 +1,89 @@
+{
+  "name": "ReIndexNow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "reindex-now",
+        "responseMode": "lastNode",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Cache-Control",
+                "value": "no-store"
+              }
+            ]
+          }
+        }
+      },
+      "id": "1",
+      "name": "ReIndex Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [200, 300],
+      "webhookId": "reindex-now"
+    },
+    {
+      "parameters": {
+        "workflowId": "24bODI6dCpsPNBta",
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "2",
+      "name": "Run NightlyIngest",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [520, 300]
+    },
+    {
+      "parameters": {
+        "responseBody": "Re-index job triggered. NightlyIngest workflow is running.",
+        "responseCode": 200
+      },
+      "id": "3",
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [840, 300]
+    }
+  ],
+  "connections": {
+    "ReIndex Webhook": {
+      "main": [
+        [
+          {
+            "node": "Run NightlyIngest",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run NightlyIngest": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "timezone": "America/New_York"
+  },
+  "staticData": null,
+  "pinData": {},
+  "active": false,
+  "versionId": "reindex-now-webhook-v1"
+}
+
+
+
+
+
+
