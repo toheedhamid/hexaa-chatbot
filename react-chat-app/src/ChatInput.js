@@ -41,7 +41,7 @@ function ChatInput({ onSendMessage, setLoading, isDrawerOpen, conversationId, WE
       
       const requestBody = { 
         text: userMessage,
-        conversationId: conversationId || `conv_${Date.now()}`
+        conversationId: conversationId || `conv_${Date.now()}` 
       };
       
       console.log('📦 Request body:', requestBody);
@@ -111,7 +111,7 @@ function ChatInput({ onSendMessage, setLoading, isDrawerOpen, conversationId, WE
       }
       else {
         console.warn('⚠️ Unknown response format:', data);
-        botMessage = 'I received your message but the response format was unexpected.';
+        botMessage = 'I received your message but response format was unexpected.';
       }
 
       // Validate message
@@ -164,7 +164,7 @@ function ChatInput({ onSendMessage, setLoading, isDrawerOpen, conversationId, WE
         value={input}
         onChange={(e) => setInput(e.target.value)}
         placeholder="Ask me anything..."
-        disabled={setLoading}
+        disabled={isLoading}
         style={{
           flex: 1,
           padding: '12px 16px',
