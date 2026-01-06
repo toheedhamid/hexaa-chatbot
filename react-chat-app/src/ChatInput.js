@@ -4,6 +4,9 @@ function ChatInput({ onSendMessage, setLoading, isDrawerOpen, conversationId, WE
   const [input, setInput] = useState('');
   const inputRef = useRef(null);
 
+  // Local n8n backend URL for development
+  const LOCAL_N8N_URL = 'http://localhost:5678';
+  
   // Railway n8n backend URL (set in Vercel environment variables)
   // Support multiple variable names for flexibility
   const N8N_BASE_URL = process.env.REACT_APP_N8N_BASE_URL || 
@@ -11,8 +14,9 @@ function ChatInput({ onSendMessage, setLoading, isDrawerOpen, conversationId, WE
                        process.env.REACT_APP_N8N_WEBHOOK_URL?.replace('/webhook/answer', '').replace('/webhook/chat-memory', '') ||
                        process.env.REACT_APP_API_BASE_URL?.replace('/api', '');
   
-  // Use Railway n8n webhook if available, otherwise fallback to Vercel API
+  // Priority: 1. Local n8n (if running), 2. Railway n8n, 3. Vercel API
   const CHAT_API_URL = WEBHOOK_URL || 
+    `${LOCAL_N8N_URL}/webhook-test/answer` ||
     (N8N_BASE_URL && !N8N_BASE_URL.includes('localhost') ? `${N8N_BASE_URL}/webhook/answer` : null) ||
     (process.env.REACT_APP_API_BASE_URL && !process.env.REACT_APP_API_BASE_URL.includes('localhost') 
       ? `${process.env.REACT_APP_API_BASE_URL}/chat-memory` 
@@ -35,6 +39,12 @@ function ChatInput({ onSendMessage, setLoading, isDrawerOpen, conversationId, WE
 
     try {
       console.log('Sending message:', userMessage);
+      console.log('Using API URL:', CHAT_API_URL);
+      console.log('Environment variables:', {
+        REACT_APP_N8N_BASE_URL: process.env.REACT_APP_N8N_BASE_URL,
+        NEXT_PUBLIC_N8N_BASE_URL: process.env.NEXT_PUBLIC_N8N_BASE_URL,
+        REACT_APP_API_BASE_URL: process.env.REACT_APP_API_BASE_URL
+      });
 
       // Determine request format based on endpoint
       const isN8nWebhook = CHAT_API_URL.includes('/webhook/');
