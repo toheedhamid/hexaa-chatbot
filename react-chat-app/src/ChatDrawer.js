@@ -4,9 +4,6 @@ import ChatInput from './ChatInput';
 
 function ChatDrawer({ isOpen, onClose, messages, onSendMessage, onFeedback, onClearChat, isLoading, setLoading, conversationId }) {
   
-  // Production Railway n8n backend URL
-  const PRODUCTION_N8N_URL = 'https://n8n-main-instance-production-0ed4.up.railway.app';
-  
   // Local n8n backend URL for development (fallback)
   const LOCAL_N8N_URL = 'http://localhost:5678';
   
