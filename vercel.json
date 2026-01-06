@@ -4,11 +4,6 @@
   "outputDirectory": "react-chat-app/build",
   "installCommand": "npm install --prefix react-chat-app && npm install --prefix api",
   "framework": null,
-  "functions": {
-    "api/**/*.js": {
-      "runtime": "nodejs18.x"
-    }
-  },
   "rewrites": [
     {
       "source": "/api/:path*",
