@@ -18,13 +18,15 @@ function ChatInput({ onSendMessage, setLoading, isDrawerOpen, conversationId, WE
                        process.env.REACT_APP_API_BASE_URL?.replace('/api', '');
   
   // Priority: 1. Production Railway, 2. Environment variables, 3. Local n8n, 4. Vercel API
-  const CHAT_API_URL = WEBHOOK_URL || 
-    `${PRODUCTION_N8N_URL}/webhook-test/answer` ||
-    (N8N_BASE_URL && !N8N_BASE_URL.includes('localhost') ? `${N8N_BASE_URL}/webhook/answer` : null) ||
-    `${LOCAL_N8N_URL}/webhook-test/answer` ||
-    (process.env.REACT_APP_API_BASE_URL && !process.env.REACT_APP_API_BASE_URL.includes('localhost') 
-      ? `${process.env.REACT_APP_API_BASE_URL}/chat-memory` 
-      : '/api/chat-memory');
+  let CHAT_API_URL;
+  
+  if (WEBHOOK_URL) {
+    CHAT_API_URL = WEBHOOK_URL;
+  } else if (N8N_BASE_URL && !N8N_BASE_URL.includes('localhost')) {
+    CHAT_API_URL = `${N8N_BASE_URL}/webhook/answer`;
+  } else {
+    CHAT_API_URL = `${PRODUCTION_N8N_URL}/webhook-test/answer`;
+  }
 
   useEffect(() => {
     if (isDrawerOpen && inputRef.current) {
