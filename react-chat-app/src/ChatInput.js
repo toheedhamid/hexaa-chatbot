@@ -60,7 +60,7 @@ function ChatInput({ onSendMessage, setLoading, isDrawerOpen, conversationId, WE
       // n8n AnswerQuery2 expects: { text, conversationId }
       // Vercel API expects: { message, conversationId, action }
       const requestBody = isN8nWebhook
-        ? { text: userMessage, conversationId: conversationId || 'default' }
+        ? { body: { text: userMessage, conversationId: conversationId || 'default' } }
         : { message: userMessage, conversationId: conversationId || 'default', action: 'chat' };
 
       const response = await fetch(CHAT_API_URL, {
