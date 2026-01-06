@@ -71,6 +71,7 @@ function ChatInput({ onSendMessage, setLoading, isDrawerOpen, conversationId, WE
 
       const data = await response.json();
       console.log('Full n8n response:', data);
+      console.log('Response keys:', Object.keys(data));
 
       // Extract bot message from n8n response
       let botMessage = 'I received your message but could not parse the response.';
@@ -80,41 +81,51 @@ function ChatInput({ onSendMessage, setLoading, isDrawerOpen, conversationId, WE
       // Format 1: Direct message field
       if (data.message) {
         botMessage = data.message;
+        console.log('Found message in data.message:', botMessage);
       }
       // Format 2: response_message field
       else if (data.response_message) {
         botMessage = data.response_message;
+        console.log('Found message in data.response_message:', botMessage);
       }
       // Format 3: Nested in json property (common in n8n)
       else if (data.json && data.json.response_message) {
         botMessage = data.json.response_message;
+        console.log('Found message in data.json.response_message:', botMessage);
       }
       // Format 4: Nested in json with message field
       else if (data.json && data.json.message) {
         botMessage = data.json.message;
+        console.log('Found message in data.json.message:', botMessage);
       }
       // Format 5: Array response from n8n
       else if (Array.isArray(data) && data[0] && data[0].json) {
         if (data[0].json.response_message) {
           botMessage = data[0].json.response_message;
+          console.log('Found message in array data[0].json.response_message:', botMessage);
         } else if (data[0].json.message) {
           botMessage = data[0].json.message;
+          console.log('Found message in array data[0].json.message:', botMessage);
         }
       }
       // Format 6: Text field
       else if (data.text) {
         botMessage = data.text;
+        console.log('Found message in data.text:', botMessage);
       }
       // Format 7: Answer field
       else if (data.answer) {
         botMessage = data.answer;
+        console.log('Found message in data.answer:', botMessage);
       }
       // Format 8: Type-based format
       else if (data.type === 'direct_response' && data.text) {
         botMessage = data.text;
+        console.log('Found message in data.type === direct_response + data.text:', botMessage);
       }
       else if (data.type === 'direct_response' && data.message) {
         botMessage = data.message;
+        console.log('Found message in data.type === direct_response + data.message:', botMessage);
       }
       // Format 9: If nothing else works, stringify for debugging
       else {
@@ -122,7 +133,7 @@ function ChatInput({ onSendMessage, setLoading, isDrawerOpen, conversationId, WE
         botMessage = `Response: ${JSON.stringify(data).substring(0, 150)}...`;
       }
 
-      console.log('Extracted bot message:', botMessage);
+      console.log('Final extracted bot message:', botMessage);
       
       const historyCount = data.historyCount || 0;
       
@@ -143,100 +154,46 @@ function ChatInput({ onSendMessage, setLoading, isDrawerOpen, conversationId, WE
     }
   };
 
-  // Debug function to test n8n connection
-  const testN8nConnection = async () => {
-    console.log('=== Testing n8n Connection ===');
-    console.log('API URL:', CHAT_API_URL);
-    
-    try {
-      const testData = {
-        text: "Hello",
-        conversationId: conversationId || 'test-' + Date.now()
-      };
-      
-      console.log('Sending test data:', testData);
-      
-      const response = await fetch(CHAT_API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(testData)
-      });
-      
-      console.log('Response status:', response.status);
-      const result = await response.json();
-      console.log('Full n8n response:', result);
-      
-      // Show in alert for debugging
-      alert(`n8n Test Successful!\n\nURL: ${CHAT_API_URL}\n\nResponse Format:\n${JSON.stringify(result, null, 2)}`);
-      
-    } catch (error) {
-      console.error('Test failed:', error);
-      alert(`n8n Test Failed!\n\nURL: ${CHAT_API_URL}\n\nError: ${error.message}`);
-    }
-  };
-
   return (
-    <>
-      <form onSubmit={handleSubmit} style={{ padding: '15px', borderTop: '1px solid #ddd', display: 'flex' }}>
-        <input
-          ref={inputRef}
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask me anything..."
-          style={{
-            flex: 1,
-            padding: '12px 16px',
-            border: '2px solid #e0e0e0',
-            borderRadius: '10px',
-            fontSize: '14px',
-            outline: 'none',
-            transition: 'border-color 0.2s'
-          }}
-          onFocus={(e) => e.target.style.borderColor = '#007bff'}
-          onBlur={(e) => e.target.style.borderColor = '#e0e0e0'}
-        />
-        <button
-          type="submit"
-          disabled={!input.trim()}
-          style={{
-            marginLeft: '12px',
-            padding: '12px 24px',
-            backgroundColor: input.trim() ? '#007bff' : '#ccc',
-            color: 'white',
-            border: 'none',
-            borderRadius: '10px',
-            cursor: input.trim() ? 'pointer' : 'not-allowed',
-            fontSize: '14px',
-            fontWeight: '700',
-            transition: 'all 0.2s',
-            boxShadow: input.trim() ? '0 2px 4px rgba(0,123,255,0.3)' : 'none'
-          }}
-        >
-          Send
-        </button>
-      </form>
-      
-      {/* Debug button - can be removed after everything works */}
-      <button 
-        onClick={testN8nConnection}
+    <form onSubmit={handleSubmit} style={{ padding: '15px', borderTop: '1px solid #ddd', display: 'flex' }}>
+      <input
+        ref={inputRef}
+        type="text"
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+        placeholder="Ask me anything..."
         style={{
-          position: 'fixed',
-          bottom: '60px',
-          right: '10px',
-          padding: '8px 12px',
-          backgroundColor: '#28a745',
+          flex: 1,
+          padding: '12px 16px',
+          border: '2px solid #e0e0e0',
+          borderRadius: '10px',
+          fontSize: '14px',
+          outline: 'none',
+          transition: 'border-color 0.2s'
+        }}
+        onFocus={(e) => e.target.style.borderColor = '#007bff'}
+        onBlur={(e) => e.target.style.borderColor = '#e0e0e0'}
+      />
+      <button
+        type="submit"
+        disabled={!input.trim()}
+        style={{
+          marginLeft: '12px',
+          padding: '12px 24px',
+          backgroundColor: input.trim() ? '#007bff' : '#ccc',
           color: 'white',
           border: 'none',
-          borderRadius: '5px',
-          cursor: 'pointer',
-          fontSize: '12px',
-          zIndex: 1000
+          borderRadius: '10px',
+          cursor: input.trim() ? 'pointer' : 'not-allowed',
+          fontSize: '14px',
+          fontWeight: '700',
+          transition: 'all 0.2s',
+          boxShadow: input.trim() ? '0 2px 4px rgba(0,123,255,0.3)' : 'none'
         }}
       >
-        Test n8n
+        Send
       </button>
-    </>
+    </form>
   );
 }
 
