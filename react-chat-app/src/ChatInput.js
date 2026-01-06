@@ -76,9 +76,23 @@ function ChatInput({ onSendMessage, setLoading, isDrawerOpen, conversationId, WE
       console.log('Chat API response data:', data);
 
       // Handle response from n8n or Vercel API
-      // n8n AnswerQuery2 returns: { answer, conversationId, ... }
+      // n8n returns: { type: "direct_response", message: "...", intent: "...", confidence: ... }
       // Vercel API returns: { message, historyCount, ... }
-      const botMessage = data.answer || data.message || 'I received your message.';
+      let botMessage;
+      
+      if (data.type === 'direct_response' && data.message) {
+        // n8n response format
+        botMessage = data.message;
+      } else if (data.answer) {
+        // Alternative n8n format
+        botMessage = data.answer;
+      } else if (data.message) {
+        // Vercel API or fallback format
+        botMessage = data.message;
+      } else {
+        botMessage = 'I received your message.';
+      }
+      
       const historyCount = data.historyCount || 0;
       
       onSendMessage(botMessage, 'bot', {
