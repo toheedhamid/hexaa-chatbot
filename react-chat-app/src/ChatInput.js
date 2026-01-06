@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 
 function ChatInput({ onSendMessage, setLoading, isDrawerOpen, conversationId, WEBHOOK_URL }) {
+  const [input, setInput] = useState('');
+  const inputRef = useRef(null);
+
   // Get n8n URL from environment or use local fallback
   const N8N_BASE_URL = WEBHOOK_URL?.split('/webhook')[0] || 
                        process.env.REACT_APP_N8N_BASE_URL || 
@@ -14,9 +17,6 @@ function ChatInput({ onSendMessage, setLoading, isDrawerOpen, conversationId, WE
     CHAT_API_URL,
     conversationId
   });
-
-  const [input, setInput] = useState('');
-  const inputRef = useRef(null);
 
   useEffect(() => {
     if (isDrawerOpen && inputRef.current) {
@@ -69,12 +69,14 @@ function ChatInput({ onSendMessage, setLoading, isDrawerOpen, conversationId, WE
 
       // ✅ EXTRACT MESSAGE - Your n8n returns: { type, message, intent, confidence }
       let botMessage = '';
+      let responseType = 'answer';
       let metadata = {};
 
       // Check response structure
       if (data.type && data.message) {
         // ✅ YOUR FORMAT: { type: 'direct_response', message: '...', intent: '...' }
         botMessage = data.message;
+        responseType = data.type;
         metadata = {
           type: data.type,
           intent: data.intent,
@@ -162,7 +164,7 @@ function ChatInput({ onSendMessage, setLoading, isDrawerOpen, conversationId, WE
         value={input}
         onChange={(e) => setInput(e.target.value)}
         placeholder="Ask me anything..."
-        disabled={isLoading}
+        disabled={setLoading}
         style={{
           flex: 1,
           padding: '12px 16px',
