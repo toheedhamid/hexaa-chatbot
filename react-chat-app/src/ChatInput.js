@@ -23,7 +23,8 @@ function ChatInput({ onSendMessage, setLoading, isDrawerOpen, conversationId, WE
   if (WEBHOOK_URL) {
     CHAT_API_URL = WEBHOOK_URL;
   } else if (N8N_BASE_URL && !N8N_BASE_URL.includes('localhost')) {
-    CHAT_API_URL = `${N8N_BASE_URL}/webhook/answer`;
+    // Production Railway uses /webhook-test/answer path
+    CHAT_API_URL = `${N8N_BASE_URL}/webhook-test/answer`;
   } else if (N8N_BASE_URL && N8N_BASE_URL.includes('localhost')) {
     CHAT_API_URL = `${N8N_BASE_URL}/webhook-test/answer`;
   } else {
@@ -55,12 +56,12 @@ function ChatInput({ onSendMessage, setLoading, isDrawerOpen, conversationId, WE
       });
 
       // Determine request format based on endpoint
-      const isN8nWebhook = CHAT_API_URL.includes('/webhook/');
+      const isN8nWebhook = CHAT_API_URL.includes('/webhook');
       
-      // n8n AnswerQuery2 expects: { text, conversationId }
+      // n8n AnswerQuery2 expects: { text, conversationId } (n8n wraps it in body automatically)
       // Vercel API expects: { message, conversationId, action }
       const requestBody = isN8nWebhook
-        ? { body: { text: userMessage, conversationId: conversationId || 'default' } }
+        ? { text: userMessage, conversationId: conversationId || 'default' }
         : { message: userMessage, conversationId: conversationId || 'default', action: 'chat' };
 
       const response = await fetch(CHAT_API_URL, {

@@ -24,7 +24,8 @@ function ChatDrawer({ isOpen, onClose, messages, onSendMessage, onFeedback, onCl
   let chatEndpoint;
   
   if (N8N_BASE_URL && !N8N_BASE_URL.includes('localhost')) {
-    chatEndpoint = `${N8N_BASE_URL}/webhook/answer`;
+    // Production Railway uses /webhook-test/answer path
+    chatEndpoint = `${N8N_BASE_URL}/webhook-test/answer`;
   } else if (N8N_BASE_URL && N8N_BASE_URL.includes('localhost')) {
     chatEndpoint = `${N8N_BASE_URL}/webhook-test/answer`;
   } else {
