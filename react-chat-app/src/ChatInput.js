@@ -2,19 +2,32 @@ import React, { useState, useEffect, useRef } from 'react';
 
 // Complete chat interface component
 function ChatInterface({ isDrawerOpen = true }) {
-  // State
-  const [messages, setMessages] = useState([]);
+  // State - load from localStorage if available
+  const [messages, setMessages] = useState(() => {
+    const saved = localStorage.getItem('n8n_chat_messages');
+    return saved ? JSON.parse(saved) : [];
+  });
+  
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [conversationId] = useState(`conv_${Date.now()}`);
+  const [conversationId] = useState(() => {
+    const saved = localStorage.getItem('n8n_chat_conversation_id');
+    return saved || `conv_${Date.now()}`;
+  });
   
   // Refs
   const inputRef = useRef(null);
   const messagesEndRef = useRef(null);
   
-  // Your PRODUCTION Railway n8n URL - only this one
+  // Your PRODUCTION Railway n8n URL
   const N8N_PRODUCTION_URL = 'https://n8n-main-instance-production-0ed4.up.railway.app';
   const CHAT_API_URL = `${N8N_PRODUCTION_URL}/webhook/answer`;
+
+  // Save messages to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('n8n_chat_messages', JSON.stringify(messages));
+    localStorage.setItem('n8n_chat_conversation_id', conversationId);
+  }, [messages, conversationId]);
 
   // Focus input when drawer opens
   useEffect(() => {
@@ -39,28 +52,21 @@ function ChatInterface({ isDrawerOpen = true }) {
     };
     
     setMessages(prev => [...prev, newMessage]);
-    console.log(`Added ${sender} message:`, text);
   };
 
   // Extract message from n8n response
   const extractMessage = (data) => {
     if (!data) return 'No response received from n8n';
     
-    console.log('Parsing n8n response:', data);
-    
-    // Try different response formats in order (most common first)
-    
-    // Format 1: Direct response with message field
+    // Try different response formats in order
     if (data.message && typeof data.message === 'string') {
       return data.message;
     }
     
-    // Format 2: response_message field (common in your workflow)
     if (data.response_message && typeof data.response_message === 'string') {
       return data.response_message;
     }
     
-    // Format 3: Nested in json property (n8n standard)
     if (data.json) {
       if (data.json.response_message && typeof data.json.response_message === 'string') {
         return data.json.response_message;
@@ -70,12 +76,10 @@ function ChatInterface({ isDrawerOpen = true }) {
       }
     }
     
-    // Format 4: text field
     if (data.text && typeof data.text === 'string') {
       return data.text;
     }
     
-    // Format 5: Array response (n8n multi-output)
     if (Array.isArray(data) && data.length > 0) {
       const firstItem = data[0];
       if (firstItem.json) {
@@ -87,7 +91,6 @@ function ChatInterface({ isDrawerOpen = true }) {
       if (firstItem.message) return firstItem.message;
     }
     
-    // Format 6: Direct response with type field
     if (data.type === 'direct_response') {
       if (data.message) return data.message;
       if (data.text) return data.text;
@@ -99,7 +102,7 @@ function ChatInterface({ isDrawerOpen = true }) {
       return `Response: ${responseStr}`;
     }
     
-    return 'Received response but could not extract message. Check console for details.';
+    return 'Received response but could not extract message.';
   };
 
   // Handle sending message
@@ -117,15 +120,10 @@ function ChatInterface({ isDrawerOpen = true }) {
     setLoading(true);
 
     try {
-      console.log('=== Sending to n8n ===');
-      console.log('URL:', CHAT_API_URL);
-      
       const requestBody = { 
         text: userMessage, 
         conversationId: conversationId
       };
-
-      console.log('Request body:', requestBody);
 
       const response = await fetch(CHAT_API_URL, {
         method: 'POST',
@@ -136,24 +134,15 @@ function ChatInterface({ isDrawerOpen = true }) {
         body: JSON.stringify(requestBody)
       });
 
-      console.log('Response status:', response.status);
-      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
-      
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(`n8n error ${response.status}: ${errorText.substring(0, 100)}`);
+        throw new Error(`Error ${response.status}: ${errorText.substring(0, 100)}`);
       }
 
       const data = await response.json();
-      console.log('=== n8n Response Data ===');
-      console.log('Full response:', data);
-      console.log('Response type:', typeof data);
-      console.log('Is array?', Array.isArray(data));
-
+      
       // Extract bot message
       const botMessage = extractMessage(data);
-      
-      console.log('Extracted message:', botMessage);
       
       // Add bot message to chat
       addMessage(botMessage, 'bot', {
@@ -163,79 +152,43 @@ function ChatInterface({ isDrawerOpen = true }) {
 
     } catch (error) {
       console.error('Error:', error);
-      addMessage(`Error: ${error.message}`, 'bot', { type: 'error' });
+      addMessage(`Sorry, there was an error processing your message.`, 'bot', { type: 'error' });
     } finally {
       setLoading(false);
     }
   };
 
-  // Test connection to n8n
-  const testConnection = async () => {
-    console.log('=== Testing n8n Connection ===');
-    console.log('URL:', CHAT_API_URL);
-    
-    try {
-      const testData = {
-        text: 'Hello',
-        conversationId: 'test-' + Date.now()
-      };
-      
-      console.log('Test request:', testData);
-      
-      const response = await fetch(CHAT_API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(testData)
-      });
-      
-      console.log('Test response status:', response.status);
-      const result = await response.json();
-      console.log('Test response data:', result);
-      
-      // Show detailed alert
-      const responseFormat = `Response Format Analysis:\n\n` +
-        `1. Raw response: ${JSON.stringify(result, null, 2)}\n\n` +
-        `2. Type: ${typeof result}\n` +
-        `3. Is Array: ${Array.isArray(result)}\n` +
-        `4. Keys: ${Object.keys(result).join(', ')}\n\n` +
-        `5. Extracted message: "${extractMessage(result)}"`;
-      
-      alert(`✅ n8n Connection Test Successful!\n\n` +
-            `URL: ${CHAT_API_URL}\n\n` +
-            `${responseFormat}`);
-      
-    } catch (error) {
-      console.error('Test failed:', error);
-      alert(`❌ n8n Connection Test Failed!\n\n` +
-            `URL: ${CHAT_API_URL}\n\n` +
-            `Error: ${error.message}\n\n` +
-            `Check browser console for details.`);
+  // Clear chat (with confirmation)
+  const clearChat = () => {
+    if (messages.length > 0) {
+      if (window.confirm('Are you sure you want to clear the chat history?')) {
+        setMessages([]);
+        // Generate new conversation ID
+        const newId = `conv_${Date.now()}`;
+        localStorage.setItem('n8n_chat_conversation_id', newId);
+        window.location.reload(); // Refresh to use new ID
+      }
     }
   };
 
-  // Clear chat
-  const clearChat = () => {
-    setMessages([]);
-  };
-
-  // Render chat interface
   return (
     <div style={styles.container}>
       {/* Header */}
       <div style={styles.header}>
         <div style={styles.headerLeft}>
-          <h3 style={styles.title}>🤖 n8n Chat Assistant</h3>
-          <div style={styles.urlInfo}>
-            <small>Connected to: {N8N_PRODUCTION_URL}</small>
-          </div>
+          <h3 style={styles.title}>Chat Assistant</h3>
+          {messages.length > 0 && (
+            <small style={styles.messageCount}>
+              {messages.length} message{messages.length !== 1 ? 's' : ''}
+            </small>
+          )}
         </div>
         <div style={styles.headerRight}>
-          <button onClick={testConnection} style={styles.testButton}>
-            🔗 Test
-          </button>
-          <button onClick={clearChat} style={styles.clearButton}>
-            🗑️ Clear
-          </button>
+          {messages.length > 0 && (
+            <button onClick={clearChat} style={styles.clearButton}>
+              Clear Chat
+            </button>
+          )}
         </div>
       </div>
 
@@ -244,15 +197,9 @@ function ChatInterface({ isDrawerOpen = true }) {
         {messages.length === 0 ? (
           <div style={styles.emptyState}>
             <div style={styles.welcomeIcon}>💬</div>
-            <p style={styles.welcomeText}>Start chatting with n8n</p>
-            <p style={styles.instructionText}>Your messages will be processed by the n8n workflow</p>
-            <p style={styles.exampleText}>Try: "Hello" or "What services do you offer?"</p>
-            <button 
-              onClick={testConnection}
-              style={styles.testExampleButton}
-            >
-              Click here to test the connection
-            </button>
+            <p style={styles.welcomeText}>Start a conversation</p>
+            <p style={styles.instructionText}>Type a message below to begin chatting</p>
+            <p style={styles.exampleText}>Try asking: "What services do you offer?" or "Tell me about pricing"</p>
           </div>
         ) : (
           messages.map((msg) => (
@@ -269,7 +216,7 @@ function ChatInterface({ isDrawerOpen = true }) {
                     {msg.sender === 'user' ? '👤' : '🤖'}
                   </span>
                   <strong style={styles.senderName}>
-                    {msg.sender === 'user' ? 'You' : 'n8n Assistant'}
+                    {msg.sender === 'user' ? 'You' : 'Assistant'}
                   </strong>
                 </div>
                 <span style={styles.timestamp}>{msg.timestamp}</span>
@@ -277,18 +224,12 @@ function ChatInterface({ isDrawerOpen = true }) {
               <div style={styles.messageContent}>{msg.text}</div>
               {msg.intent && (
                 <div style={styles.metadata}>
-                  <span style={styles.metadataLabel}>Intent:</span>
-                  <strong style={styles.intentText}> {msg.intent}</strong>
+                  <span style={styles.intentText}>{msg.intent}</span>
                   {msg.confidence && (
                     <span style={styles.confidenceText}>
-                      {' '}({Math.round(msg.confidence * 100)}% confidence)
+                      ({Math.round(msg.confidence * 100)}%)
                     </span>
                   )}
-                </div>
-              )}
-              {msg.type === 'error' && (
-                <div style={styles.errorMetadata}>
-                  ⚠️ Error response
                 </div>
               )}
             </div>
@@ -304,7 +245,7 @@ function ChatInterface({ isDrawerOpen = true }) {
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Type your message to n8n workflow..."
+          placeholder="Type your message..."
           style={styles.inputField}
           disabled={loading}
           onKeyPress={(e) => e.key === 'Enter' && handleSubmit(e)}
@@ -318,31 +259,9 @@ function ChatInterface({ isDrawerOpen = true }) {
             cursor: (input.trim() && !loading) ? 'pointer' : 'not-allowed'
           }}
         >
-          {loading ? (
-            <span style={styles.loadingText}>
-              <span style={styles.spinner}>⏳</span> Sending...
-            </span>
-          ) : (
-            <span>Send</span>
-          )}
+          {loading ? 'Sending...' : 'Send'}
         </button>
       </form>
-
-      {/* Status Bar */}
-      <div style={styles.statusBar}>
-        <div style={styles.statusLeft}>
-          <span style={styles.statusDot}></span>
-          <small>
-            Connected to: <strong>{N8N_PRODUCTION_URL}</strong>
-          </small>
-        </div>
-        <div style={styles.statusRight}>
-          <small>
-            Messages: <strong>{messages.length}</strong> | 
-            Status: <strong>{loading ? 'Processing...' : 'Ready'}</strong>
-          </small>
-        </div>
-      </div>
     </div>
   );
 }
@@ -380,45 +299,24 @@ const styles = {
     fontWeight: '700',
     letterSpacing: '-0.3px',
   },
-  urlInfo: {
-    fontSize: '11px',
+  messageCount: {
+    fontSize: '12px',
     opacity: 0.9,
-    fontFamily: 'monospace',
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    padding: '2px 6px',
-    borderRadius: '3px',
-    display: 'inline-block',
+    fontWeight: '500',
   },
   headerRight: {
     display: 'flex',
     gap: '10px',
   },
-  testButton: {
-    padding: '8px 16px',
-    backgroundColor: '#28a745',
-    color: 'white',
-    border: 'none',
-    borderRadius: '6px',
-    cursor: 'pointer',
-    fontSize: '13px',
-    fontWeight: '600',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '5px',
-    transition: 'all 0.2s',
-  },
   clearButton: {
     padding: '8px 16px',
-    backgroundColor: '#dc3545',
+    backgroundColor: 'rgba(255,255,255,0.2)',
     color: 'white',
-    border: 'none',
+    border: '1px solid rgba(255,255,255,0.3)',
     borderRadius: '6px',
     cursor: 'pointer',
     fontSize: '13px',
     fontWeight: '600',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '5px',
     transition: 'all 0.2s',
   },
   messagesArea: {
@@ -436,6 +334,7 @@ const styles = {
   welcomeIcon: {
     fontSize: '48px',
     marginBottom: '16px',
+    opacity: 0.5,
   },
   welcomeText: {
     fontSize: '20px',
@@ -453,17 +352,6 @@ const styles = {
     color: '#adb5bd',
     fontStyle: 'italic',
     marginBottom: '24px',
-  },
-  testExampleButton: {
-    padding: '10px 20px',
-    backgroundColor: '#6c757d',
-    color: 'white',
-    border: 'none',
-    borderRadius: '6px',
-    cursor: 'pointer',
-    fontSize: '13px',
-    fontWeight: '500',
-    transition: 'all 0.2s',
   },
   messageBubble: {
     marginBottom: '16px',
@@ -522,23 +410,17 @@ const styles = {
     borderTop: '1px dashed rgba(0,0,0,0.1)',
     fontSize: '12px',
     color: '#6c757d',
-  },
-  metadataLabel: {
-    opacity: 0.7,
+    display: 'flex',
+    alignItems: 'center',
+    gap: '5px',
   },
   intentText: {
     color: '#28a745',
+    fontWeight: '600',
   },
   confidenceText: {
     color: '#6c757d',
     fontSize: '11px',
-  },
-  errorMetadata: {
-    marginTop: '10px',
-    paddingTop: '10px',
-    borderTop: '1px dashed #dc3545',
-    fontSize: '12px',
-    color: '#dc3545',
   },
   inputForm: {
     display: 'flex',
@@ -570,53 +452,10 @@ const styles = {
     minWidth: '90px',
     transition: 'all 0.2s',
   },
-  loadingText: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: '8px',
-  },
-  spinner: {
-    animation: 'spin 1s linear infinite',
-  },
-  statusBar: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: '10px 20px',
-    backgroundColor: '#f8f9fa',
-    borderTop: '1px solid #e9ecef',
-    fontSize: '12px',
-    color: '#6c757d',
-  },
-  statusLeft: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-  },
-  statusDot: {
-    width: '8px',
-    height: '8px',
-    backgroundColor: '#28a745',
-    borderRadius: '50%',
-    animation: 'pulse 2s infinite',
-  },
-  statusRight: {
-    display: 'flex',
-    gap: '15px',
-  },
   '@global': {
     '@keyframes fadeIn': {
       from: { opacity: 0, transform: 'translateY(10px)' },
       to: { opacity: 1, transform: 'translateY(0)' },
-    },
-    '@keyframes spin': {
-      from: { transform: 'rotate(0deg)' },
-      to: { transform: 'rotate(360deg)' },
-    },
-    '@keyframes pulse': {
-      '0%, 100%': { opacity: 1 },
-      '50%': { opacity: 0.5 },
     },
   },
 };
