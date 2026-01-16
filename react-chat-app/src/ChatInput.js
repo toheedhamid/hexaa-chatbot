@@ -21,7 +21,7 @@ function ChatInterface({ isDrawerOpen = true }) {
   const messagesEndRef = useRef(null);
   
   // Your PRODUCTION Railway n8n URL
-  const N8N_PRODUCTION_URL = 'https://n8n-main-instance-production-0ed4.up.railway.app';
+  const N8N_PRODUCTION_URL = 'https://primary-production-b34ab.up.railway.app';
   const CHAT_API_URL = `${N8N_PRODUCTION_URL}/webhook/answer`;
 
   // Save messages to localStorage whenever they change
